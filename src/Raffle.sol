@@ -8,7 +8,7 @@ import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/V
  * @title A simple Raffle contract
  * @author ZhaoYi
  * @notice This contract implements a simple raffle system.
- * @dev Implements Chainlink VRF v2.5
+ * @dev Implements Chainlink VRF v2.5 and Chainlink Automation.
  */
 contract Raffle is VRFConsumerBaseV2Plus {
     /* Errors */
@@ -31,8 +31,9 @@ contract Raffle is VRFConsumerBaseV2Plus {
     bytes32 private immutable i_keyHash;
     uint256 private immutable i_subscriptionId;
     uint32 private immutable i_callbackGasLimit;
-    address payable[] private s_players;
     uint256 private s_lastTimeStamp;
+    
+    address payable[] private s_players;
     address private s_recentWinner;
     RaffleState private s_raffleState;
 
