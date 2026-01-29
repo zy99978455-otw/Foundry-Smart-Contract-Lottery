@@ -13,7 +13,17 @@ import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/V
 contract Raffle is VRFConsumerBaseV2Plus {
     /* Errors */
     error Raffle__SendMoreToEnterRaffle();
+    error Raffle_TranferFailed();
+    error Raffle_RaffleNotOpen();
 
+    /* Type Declarations */
+    enum RaffleState {
+        OPEN,   //0
+        CALCULATING //1
+    }
+
+
+    /* State Variables */
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private constant NUM_WORDS = 1;
     uint256 private immutable i_entranceFee;
@@ -23,6 +33,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
     uint32 private immutable i_callbackGasLimit;
     address payable[] private s_players;
     uint256 private s_lastTimeStamp;
+    address private s_recentWinner;
+    RaffleState private s_raffleState;
 
     /* Events */
     event RaffleEntered(address indexed player);
@@ -40,7 +52,9 @@ contract Raffle is VRFConsumerBaseV2Plus {
         s_lastTimeStamp = block.timestamp;
         i_keyHash = gasLine;
         i_subscriptionId = subscriptionId;
+
         i_callbackGasLimit = callbackGasLimit;
+        s_raffleState = RaffleState.OPEN;
     }
 
     function enterRaffle() external payable {
@@ -48,6 +62,10 @@ contract Raffle is VRFConsumerBaseV2Plus {
         // require(msg.value >= i_entranceFee, SendMoreToEnterRaffle);
         if (msg.value < i_entranceFee) {
             revert Raffle__SendMoreToEnterRaffle(); // gas 效率最高
+        }
+
+        if (s_raffleState != RaffleState.OPEN) {
+            revert Raffle_RaffleNotOpen();
         }
         s_players.push(payable(msg.sender));
 
@@ -62,6 +80,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         if ((block.timestamp - s_lastTimeStamp) < i_interval) {
             revert();
         }
+        s_raffleState = RaffleState.CALCULATING;
 
         VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient.RandomWordsRequest({
             keyHash: i_keyHash, //用哪一组随机节点
@@ -80,6 +99,15 @@ contract Raffle is VRFConsumerBaseV2Plus {
     function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
         // 这里是以后写“选出赢家”逻辑的地方
         // 现在留空没关系，只要有这个函数壳子，就能通过编译
+        uint256 indexOfWinner = randomWords[0] % s_players.length;
+        address payable recentWinner = s_players[indexOfWinner];
+        s_recentWinner = recentWinner;
+        s_raffleState = RaffleState.OPEN;
+
+        (bool success,) = recentWinner.call{value: address(this).balance}("");
+        if (!success) {
+            revert Raffle_TranferFailed();
+        }
     }
 
     /**
