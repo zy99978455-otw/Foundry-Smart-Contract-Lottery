@@ -14,8 +14,8 @@ import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/autom
 contract Raffle is VRFConsumerBaseV2Plus {
     /* Errors */
     error Raffle__SendMoreToEnterRaffle();
-    error Raffle_TranferFailed();
-    error Raffle_RaffleNotOpen();
+    error Raffle__TranferFailed();
+    error Raffle__RaffleNotOpen();
 
     error Raffle__UpkeepNotNeeded(uint256 currentBalance, uint256 numPlayers, uint256 raffleState);
 
@@ -69,7 +69,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         }
 
         if (s_raffleState != RaffleState.OPEN) {
-            revert Raffle_RaffleNotOpen();
+            revert Raffle__RaffleNotOpen();
         }
         s_players.push(payable(msg.sender));
 
@@ -127,7 +127,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         s_vrfCoordinator.requestRandomWords(request);
     }
 
-    function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
+    function fulfillRandomWords(uint256 /*requestId*/, uint256[] calldata randomWords) internal override {
         
         uint256 indexOfWinner = randomWords[0] % s_players.length;
         address payable recentWinner = s_players[indexOfWinner];
@@ -139,7 +139,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
         (bool success,) = recentWinner.call{value: address(this).balance}("");
         if (!success) {
-            revert Raffle_TranferFailed();
+            revert Raffle__TranferFailed();
         }
     }
 
@@ -149,6 +149,14 @@ contract Raffle is VRFConsumerBaseV2Plus {
     function getEntranceFee() external view returns (uint256) {
         return i_entranceFee;
     }
+
+    function getRaffleState() external view returns (RaffleState) {
+        return s_raffleState;
+    }
+
+    function getPlayer(uint256 index) external view returns (address) {
+        return s_players[index];
+    } 
 
 
 }

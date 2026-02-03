@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 
 import {Script, console2} from "forge-std/Script.sol";
-import {VRFCoordinatorV2_5Mock} from "chainlink/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
+import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 
 
 abstract contract CodeConstants {
@@ -31,7 +31,7 @@ contract HelperConfig is CodeConstants, Script {
 
     // 定义 Mock 需要的常量
     uint96 public constant MOCK_BASE_FEE = 0.25 ether;  // 每次请求收 0.25 LINK
-    uint256 public constant MOCK_GAS_PRICE_LINK = 1e9;  // 模拟 GAS 价格
+    uint96 public constant MOCK_GAS_PRICE_LINK = 1e9;  // 模拟 GAS 价格
     int256 public constant MOCK_WEI_PER_UNIT_LINK = 4e15;   // LINK/ETH 汇率
 
     constructor() {
@@ -40,7 +40,7 @@ contract HelperConfig is CodeConstants, Script {
 
     // 根据 ChainID 获取配置
     function getConfigByChainId(uint256 chainId) public returns (NetworkConfig memory) {
-        if (networkConfigs[chainId].vrfCoorinator != address(0)) {
+        if (networkConfigs[chainId].vrfCoordinator != address(0)) {
             return networkConfigs[chainId];
         } else if (chainId == LOCAL_CHAIN_ID) {
             return getOrCreateAnvilEthConfig();
@@ -64,7 +64,7 @@ contract HelperConfig is CodeConstants, Script {
             callbackGasLimit: 500000, // 500,000 gas
             subscriptionId: 0,
             link: 0x779877A7B0D9E8603169DdbD7836e478b4624789,
-            deployerKey: vm.envUint("PRIVATE_KEY")
+            deployerKey: 0
         });
 }
 
