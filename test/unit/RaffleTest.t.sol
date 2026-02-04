@@ -16,7 +16,7 @@ contract RaffleTest is Test {
     HelperConfig public helperConfig;
 
     uint256 entranceFee;
-    uint256 interval;
+    uint256 automationUpdateInterval;
     address vrfCoordinator;
     bytes32 gasLane;
     uint256 subscriptionId;
@@ -37,7 +37,7 @@ contract RaffleTest is Test {
 
         // 赋值给状态变量
         entranceFee = config.entranceFee;
-        interval = config.interval;
+        automationUpdateInterval = config.automationUpdateInterval;
         vrfCoordinator = config.vrfCoordinator;
         gasLane = config.gasLane;
         subscriptionId = config.subscriptionId;
@@ -93,7 +93,7 @@ contract RaffleTest is Test {
         raffle.enterRaffle{value: entranceFee}();
 
         // 导演：时间快进！
-        vm.warp(block.timestamp + interval + 1);
+        vm.warp(block.timestamp + automationUpdateInterval + 1);
         vm.roll(block.number + 1);
 
         // 触发开奖，这会把状态改为 CALCULATING
@@ -103,5 +103,17 @@ contract RaffleTest is Test {
         vm.expectRevert(Raffle.Raffle__RaffleNotOpen.selector);
         vm.prank(PLAYER);
         raffle.enterRaffle{value: entranceFee}();
+    }
+
+    function testCheckUpkeepReturnsFalseIfItHasNoBalance() public {
+        // Arrange
+        vm.warp(block.timestamp + automationUpdateInterval + 1);
+        vm.roll(block.number + 1);
+
+        // Act
+        (bool upkeepNeeded,) = raffle.checkUpkeep("");
+
+        // Assert
+        assert(!upkeepNeeded);
     }
 }
