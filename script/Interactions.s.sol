@@ -5,13 +5,17 @@ import {Script, console} from "forge-std/Script.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
 import {LinkToken} from "../test/mocks/LinkToken.sol"; 
 import {DevOpsTools} from "lib/foundry-devops/src/DevOpsTools.sol"; 
-
-// 引入Mock合约
 import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 
-// 1. 创建订阅
+/**
+ * @title CreateSubscription Script
+ * @notice Automates the creation of a Chainlink VRF subscription.
+ * @dev This is crucial for automation pipelines where we don't want to use the UI manually.
+ */
 contract CreateSubscription is Script {
-    // 1. 如果没有传参数，就去配置里找 vrfCoordinator
+    /**
+     * @notice Entry point to create a subscription using the current network configuration.
+     */
     function CreateSubscriptionUsingConfig() public returns (uint256) {
         HelperConfig helperConfig = new HelperConfig();
 
@@ -19,13 +23,15 @@ contract CreateSubscription is Script {
         return createSubscription(config.vrfCoordinator);
     }
 
-    // 2. 真正的创建逻辑
+    /**
+     * @notice Logic to create the subscription on the VRF Coordinator.
+     * @param vrfCoordinator The address of the VRF Coordinator contract.
+     */
     function createSubscription(address vrfCoordinator) public returns (uint256) {
         console.log("Creating subscription on ChainID: ", block.chainid);
-
         vm.startBroadcast();
-
-
+        // We cast to Mock to access the createSubscription function.
+        // Note: In V2.5, this signature is standard across Mocks and Mainnet.
         uint256 subId = VRFCoordinatorV2_5Mock(vrfCoordinator).createSubscription();
         vm.stopBroadcast();
 
@@ -33,7 +39,6 @@ contract CreateSubscription is Script {
         console.log("Please update subscriptionId in HelperConfig!");
         return subId;
     }
-
     function run() external returns (uint256) {
         return CreateSubscriptionUsingConfig();
     }
